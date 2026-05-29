@@ -124,6 +124,136 @@ _init()
 
 def tx(k): return t(k, st.session_state.lang)
 
+# ── RTL Support — يُطبَّق تلقائياً عند اختيار العربية ────────────────
+def _apply_rtl(lang: str):
+    if lang == "ar":
+        st.markdown("""
+<style>
+/* ── RTL: قلب اتجاه النص بالكامل ── */
+[data-testid="stAppViewContainer"],
+[data-testid="stAppViewBlockContainer"],
+[data-testid="block-container"],
+section.main > div,
+.main .block-container {
+    direction: rtl !important;
+    text-align: right !important;
+}
+
+/* Sidebar RTL */
+[data-testid="stSidebar"] > div {
+    direction: rtl !important;
+    text-align: right !important;
+}
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] span,
+[data-testid="stSidebar"] p {
+    direction: rtl !important;
+    text-align: right !important;
+}
+
+/* Streamlit widgets labels */
+label, .stMarkdown, .stText, p, h1, h2, h3, h4, li {
+    direction: rtl !important;
+    text-align: right !important;
+    font-family: 'Segoe UI', 'Tahoma', 'Arial', sans-serif !important;
+}
+
+/* عناصر الـ info boxes  */
+.ib, .wb, .sb {
+    direction: rtl !important;
+    text-align: right !important;
+    border-left: none !important;
+    border-right: 4px solid;
+    padding-right: 1.1rem !important;
+    padding-left: .9rem !important;
+}
+.ib { border-right-color: #06b6d4 !important; }
+.wb { border-right-color: #f59e0b !important; }
+.sb { border-right-color: #22c55e !important; }
+
+/* Step cards */
+.cs {
+    direction: rtl !important;
+    flex-direction: row-reverse !important;
+}
+
+/* Metric cards */
+.mc, .mv, .ml {
+    direction: rtl !important;
+    text-align: center !important;
+}
+
+/* cr rows */
+.cr {
+    direction: rtl !important;
+    flex-direction: row-reverse !important;
+}
+.cr-l { text-align: right !important; }
+.cr-v { text-align: left !important; font-family: 'JetBrains Mono', monospace !important; }
+
+/* Selectbox / radio labels */
+[data-baseweb="select"] * ,
+[data-baseweb="radio"] * {
+    direction: rtl !important;
+    text-align: right !important;
+}
+
+/* Buttons */
+.stButton > button {
+    direction: rtl !important;
+}
+
+/* Hero */
+.hero-title, .hero-sub {
+    direction: rtl !important;
+    text-align: right !important;
+}
+
+/* Horizontal radio nav: keep centered */
+[data-testid="stHorizontalBlock"] label {
+    text-align: center !important;
+}
+
+/* Dataframe headers */
+.stDataFrame { direction: rtl !important; }
+
+/* Expander */
+[data-testid="stExpander"] summary,
+[data-testid="stExpander"] div {
+    direction: rtl !important;
+    text-align: right !important;
+}
+</style>
+""", unsafe_allow_html=True)
+    else:
+        # Reset to LTR for EN and TR
+        st.markdown("""
+<style>
+[data-testid="stAppViewContainer"],
+[data-testid="stAppViewBlockContainer"],
+[data-testid="block-container"],
+section.main > div,
+.main .block-container,
+[data-testid="stSidebar"] > div,
+label, .stMarkdown, p, h1, h2, h3 {
+    direction: ltr !important;
+    text-align: left !important;
+}
+.ib, .wb, .sb {
+    border-left: 4px solid;
+    border-right: none !important;
+    padding-left: 1.1rem !important;
+    padding-right: .9rem !important;
+}
+.ib { border-left-color: #06b6d4 !important; }
+.wb { border-left-color: #f59e0b !important; }
+.sb { border-left-color: #22c55e !important; }
+.cs { flex-direction: row !important; }
+.cr { flex-direction: row !important; }
+</style>
+""", unsafe_allow_html=True)
+
+
 def plo(h=400):
     return dict(height=h,paper_bgcolor="rgba(0,0,0,0)",plot_bgcolor="rgba(0,0,0,0)",
                 font=dict(color=TEXT,family="Inter"),
@@ -225,6 +355,8 @@ per_res    = st.session_state.per_cluster_res
 
 # ── Hero ──────────────────────────────────────────────────────────────
 lang = st.session_state.lang
+_apply_rtl(lang)   # ← RTL/LTR تبديل تلقائي حسب اللغة
+
 st.markdown(f"""
 <div class="hero">
   <div><span class="badge">DBSCAN</span>
@@ -386,6 +518,16 @@ elif page == tx("page_compression"):
     sh(tx("comp_title"), method.upper())
     ib(tx("comp_concept"))
 
+    if baseline is None or sorted_res is None or per_res is None:
+        ib("⚠️ " + (
+            "Please press **▶ Run** in the sidebar to compute compression results."
+            if lang=="en" else
+            "اضغط على **▶ تشغيل** في الشريط الجانبي لحساب نتائج الضغط."
+            if lang=="ar" else
+            "Sıkıştırma sonuçlarını hesaplamak için kenar çubuğundaki **▶ Çalıştır** düğmesine basın."
+        ), "w")
+        st.stop()
+
     with st.expander(f"📖 {tx('comp_how_title')}", expanded=True):
         for i,k in enumerate(["comp_step1","comp_step2","comp_step3","comp_step4","comp_step5"],1):
             cs(i, tx(k))
@@ -470,6 +612,16 @@ elif page == tx("page_compression"):
 elif page == tx("page_search"):
     sh(tx("search_title"), "Benchmark")
     ib(tx("search_desc"))
+
+    if per_res is None:
+        ib("⚠️ " + (
+            "Please press **▶ Run** in the sidebar first."
+            if lang=="en" else
+            "اضغط على **▶ تشغيل** في الشريط الجانبي أولاً."
+            if lang=="ar" else
+            "Önce kenar çubuğundaki **▶ Çalıştır** düğmesine basın."
+        ), "w")
+        st.stop()
 
     with st.expander(f"📖 {tx('search_why_title')}", expanded=False):
         for i,k in enumerate(["search_why1","search_why2","search_why3","search_why4"],1):
@@ -616,62 +768,102 @@ elif page == tx("page_blocks"):
 # ═══════════════════════════════════════════════════════════════════
 elif page == tx("page_metrics"):
     import psutil, os
-    mem_mb=psutil.Process(os.getpid()).memory_info().rss/1_048_576
     sh(tx("metrics_title"), "Metrics")
     ib(tx("metrics_desc"))
 
+    # ── Guard: make sure compression has been computed ─────────────
+    if baseline is None or sorted_res is None or per_res is None:
+        ib(
+            "⚠️ " + (
+                "Please press the **▶ Run** button in the sidebar first to compute DBSCAN clustering and compression results."
+                if lang == "en" else
+                "من فضلك اضغط على زر **▶ تشغيل** في الشريط الجانبي أولاً لحساب التجميع ونتائج الضغط."
+                if lang == "ar" else
+                "Lütfen önce kenar çubuğundaki **▶ Çalıştır** düğmesine basın."
+            ),
+            "w"
+        )
+        st.stop()
+
+    mem_mb = psutil.Process(os.getpid()).memory_info().rss / 1_048_576
+
     for col,(l,v) in zip(st.columns(4),[
-        (tx("metrics_dbscan_time"),f"{etime:.2f}s"),
-        (tx("metrics_memory"),f"{mem_mb:.0f} MB"),
-        (tx("metrics_rows"),f"{len(df):,}"),
-        (tx("metrics_blocks"),f"{per_res['n_blocks']}"),
+        (tx("metrics_dbscan_time"), f"{etime:.2f}s"  if etime  else "—"),
+        (tx("metrics_memory"),      f"{mem_mb:.0f} MB"),
+        (tx("metrics_rows"),        f"{len(df):,}"),
+        (tx("metrics_blocks"),      str(per_res.get("n_blocks", "—"))),
     ]):
-        with col: st.markdown(mc(l,v),unsafe_allow_html=True)
+        with col: st.markdown(mc(l,v), unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     sh(tx("metrics_cmp_table"))
-    tbl=build_comparison_table([baseline,sorted_res,per_res])
-    tbl["Strategy"]=tbl["Strategy"].map({
-        "baseline_random":tx("comp_baseline_label"),
-        "cluster_sorted":tx("comp_sorted_label"),
-        "per_cluster_blocks":tx("comp_percluster_label"),
-    })
-    st.dataframe(tbl, use_container_width=True, hide_index=True)
+    try:
+        tbl = build_comparison_table([baseline, sorted_res, per_res])
+        tbl["Strategy"] = tbl["Strategy"].map({
+            "baseline_random":   tx("comp_baseline_label"),
+            "cluster_sorted":    tx("comp_sorted_label"),
+            "per_cluster_blocks":tx("comp_percluster_label"),
+        })
+        st.dataframe(tbl, use_container_width=True, hide_index=True)
+    except Exception as e:
+        ib(f"⚠️ Table error: {e}", "w")
 
     sh(tx("metrics_eps_title"))
     ib(tx("metrics_eps_desc"))
-    eps_vals=[0.2,0.3,0.4,0.5,0.6,0.7,0.8,1.0,1.2,1.5]
-    with st.spinner(tx("processing")):
-        sens=eps_sensitivity(X_scaled,eps_vals,st.session_state.min_samples)
-    fig_sens=make_subplots(specs=[[{"secondary_y":True}]])
-    fig_sens.add_trace(go.Scatter(x=sens["eps"],y=sens["n_clusters"],
-        name=tx("total_clusters"),mode="lines+markers",
-        line=dict(color=VIOLET,width=2.5),marker=dict(size=8)),secondary_y=False)
-    fig_sens.add_trace(go.Scatter(x=sens["eps"],y=sens["n_noise"],
-        name=tx("noise_count"),mode="lines+markers",
-        line=dict(color=RED,width=2.5,dash="dot"),marker=dict(size=8)),secondary_y=True)
-    fig_sens.add_vline(x=st.session_state.eps,line=dict(color=AMBER,dash="dash",width=2),
-        annotation_text=f"ε={st.session_state.eps}",annotation_font_color=AMBER)
-    fig_sens.update_layout(paper_bgcolor="rgba(0,0,0,0)",plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(color=TEXT,family="Inter"),height=360,
-        legend=dict(bgcolor="rgba(0,0,0,0)"),margin=dict(l=50,r=50,t=50,b=50))
-    fig_sens.update_yaxes(title_text=tx("total_clusters"),secondary_y=False,gridcolor=BORDER)
-    fig_sens.update_yaxes(title_text=tx("noise_count"),secondary_y=True)
-    st.plotly_chart(fig_sens, use_container_width=True)
+    eps_vals = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0, 1.2, 1.5]
+    try:
+        with st.spinner(tx("processing")):
+            sens = eps_sensitivity(X_scaled, eps_vals, st.session_state.min_samples)
+        fig_sens = make_subplots(specs=[[{"secondary_y": True}]])
+        fig_sens.add_trace(go.Scatter(x=sens["eps"], y=sens["n_clusters"],
+            name=tx("total_clusters"), mode="lines+markers",
+            line=dict(color=VIOLET, width=2.5), marker=dict(size=8)), secondary_y=False)
+        fig_sens.add_trace(go.Scatter(x=sens["eps"], y=sens["n_noise"],
+            name=tx("noise_count"), mode="lines+markers",
+            line=dict(color=RED, width=2.5, dash="dot"), marker=dict(size=8)), secondary_y=True)
+        fig_sens.add_vline(x=st.session_state.eps,
+            line=dict(color=AMBER, dash="dash", width=2),
+            annotation_text=f"ε={st.session_state.eps}",
+            annotation_font_color=AMBER)
+        fig_sens.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color=TEXT, family="Inter"), height=360,
+            legend=dict(bgcolor="rgba(0,0,0,0)"), margin=dict(l=50,r=50,t=50,b=50))
+        fig_sens.update_yaxes(title_text=tx("total_clusters"), secondary_y=False, gridcolor=BORDER)
+        fig_sens.update_yaxes(title_text=tx("noise_count"), secondary_y=True)
+        st.plotly_chart(fig_sens, use_container_width=True)
+    except Exception as e:
+        ib(f"⚠️ Sensitivity chart error: {e}", "w")
 
     sh(tx("metrics_summary"))
-    summary=[(tx("total_txs"),f"{len(df):,}"),(tx("total_blocks"),f"{df['block_number'].nunique():,}"),
-             (tx("total_size"),human_size(baseline["raw_size"])),(tx("comp_baseline_label"),human_size(baseline["comp_size"])),
-             (tx("comp_sorted_label"),human_size(sorted_res["comp_size"])),(tx("comp_percluster_label"),human_size(per_res["comp_size"])),
-             ("Baseline Ratio",f"{baseline['ratio']:.3f}×"),("Cluster-Sorted Ratio",f"{sorted_res['ratio']:.3f}×"),
-             ("Improvement",f"+{(sorted_res['ratio']/baseline['ratio']-1)*100:.1f}%"),
-             (tx("metrics_blocks"),str(per_res["n_blocks"])),(tx("total_clusters"),str(n_clusters)),
-             (tx("noise_count"),f"{n_noise:,}"),("Epsilon (ε)",str(st.session_state.eps)),
-             ("min_samples",str(st.session_state.min_samples)),(tx("metrics_dbscan_time"),f"{etime:.2f}s"),
-             (tx("comp_method_label"),method.upper()),(tx("metrics_memory"),f"{mem_mb:.0f} MB")]
-    st.dataframe(pd.DataFrame(summary,columns=[tx("metric"),tx("value_col")]),
-                 use_container_width=True,hide_index=True,height=540)
-    ib(tx("metrics_grad_note"),"s")
+    try:
+        improvement = (sorted_res['ratio'] / baseline['ratio'] - 1) * 100 if baseline['ratio'] else 0
+        summary = [
+            (tx("total_txs"),            f"{len(df):,}"),
+            (tx("total_blocks"),         f"{df['block_number'].nunique():,}"),
+            (tx("total_size"),           human_size(baseline["raw_size"])),
+            (tx("comp_baseline_label"),  human_size(baseline["comp_size"])),
+            (tx("comp_sorted_label"),    human_size(sorted_res["comp_size"])),
+            (tx("comp_percluster_label"),human_size(per_res["comp_size"])),
+            ("Baseline Ratio",           f"{baseline['ratio']:.3f}×"),
+            ("Cluster-Sorted Ratio",     f"{sorted_res['ratio']:.3f}×"),
+            ("Improvement",              f"+{improvement:.1f}%"),
+            (tx("metrics_blocks"),       str(per_res.get("n_blocks","—"))),
+            (tx("total_clusters"),       str(n_clusters)),
+            (tx("noise_count"),          f"{n_noise:,}"),
+            ("Epsilon (ε)",              str(st.session_state.eps)),
+            ("min_samples",              str(st.session_state.min_samples)),
+            (tx("metrics_dbscan_time"),  f"{etime:.2f}s" if etime else "—"),
+            (tx("comp_method_label"),    method.upper()),
+            (tx("metrics_memory"),       f"{mem_mb:.0f} MB"),
+        ]
+        st.dataframe(
+            pd.DataFrame(summary, columns=[tx("metric"), tx("value_col")]),
+            use_container_width=True, hide_index=True, height=560)
+        ib(tx("metrics_grad_note"), "s")
+    except Exception as e:
+        ib(f"⚠️ Summary error: {e}", "w")
+
 
 # ═══════════════════════════════════════════════════════════════════
 # PAGE 7 — ALGORITHM COMPARISON (DBSCAN vs K-Means)
