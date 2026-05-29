@@ -1,0 +1,27 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.env
+.venv
+env/
+venv/
+.idea/
+.vscode/
+*.egg-info/
+dist/
+build/
+.DS_Store
+Thumbs.db
+
+# Temp/debug files
+_append_compressor.py
+_test_trans.py
+fix.py
+fix3.py
+fix4.py
+fix_swap.py
+
+# Don't ignore Dataset.csv — needed for deployment!
+# Dataset.csv
