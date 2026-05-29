@@ -107,6 +107,26 @@ div[data-baseweb="select"]>div{{background:{CARD2};border:1px solid {BORDER};col
 ::-webkit-scrollbar-track{{background:{BG};}}
 ::-webkit-scrollbar-thumb{{background:{BORDER};border-radius:3px;}}
 ::-webkit-scrollbar-thumb:hover{{background:{VIOLET};}}
+
+/* ── Force sidebar always expanded ── */
+[data-testid="stSidebar"] {{
+    display: block !important;
+    visibility: visible !important;
+    min-width: 244px !important;
+    max-width: 320px !important;
+    transform: none !important;
+    opacity: 1 !important;
+}}
+[data-testid="stSidebar"][aria-expanded="false"] {{
+    display: block !important;
+    transform: none !important;
+    min-width: 244px !important;
+}}
+/* Hide the collapse arrow on desktop */
+@media (min-width: 768px) {{
+    [data-testid="collapsedControl"] {{ display: none !important; }}
+    button[kind="header"] {{ display: none !important; }}
+}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -301,7 +321,9 @@ with st.sidebar:
     chosen = st.selectbox(tx("language_label"), list(lang_map.keys()),
                           index=["en","ar","tr"].index(st.session_state.lang))
     if lang_map[chosen] != st.session_state.lang:
-        st.session_state.lang = lang_map[chosen]; st.rerun()
+        st.session_state.lang = lang_map[chosen]
+        # No st.rerun() — avoids sidebar collapse on Streamlit Cloud
+
 
     st.markdown("---")
     st.markdown(f'<div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:{MUTED}">⚙️ {tx("sidebar_params")}</div>', unsafe_allow_html=True)
